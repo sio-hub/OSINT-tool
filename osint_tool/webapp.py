@@ -123,20 +123,25 @@ def api_github(payload: Dict[str, object]) -> JSONResponse:
     data = _safe_run(_github_user_data(user))
     return JSONResponse({"user": user, **data})
 
+class SubdomainsPayload(BaseModel):
+    domain: str
+    resolve: bool = False
+    limit: int = 200
+
+
 @app.post("/api/subdomains")
-def api_subdomains(payload: Dict[str, object]) -> JSONResponse:
-    domain = str(payload.get("domain", "")).strip()
-    resolve = bool(payload.get("resolve", False))
-    try:
-        limit = int(payload.get("limit", 200))
-    except Exception:
-        limit = 200
+def api_subdomains(payload: SubdomainsPayload) -> JSONResponse:
+    domain = payload.domain.strip()
     if not domain:
         raise HTTPException(status_code=400, detail="'domain' is required")
-    subs = _safe_run(_fetch_crtsh(domain))
-    if limit and limit > 0:
+    try:
+        subs = _safe_run(_fetch_crtsh(domain))
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Subdomain source error: {type(exc).__name__}")
+    limit = max(0, int(payload.limit or 0))
+    if limit:
         subs = subs[:limit]
-    if not resolve:
+    if not payload.resolve:
         return JSONResponse({"domain": domain, "count": len(subs), "subdomains": subs})
     # Resolve A records for each subdomain (best-effort, short timeout)
     from dns import resolver

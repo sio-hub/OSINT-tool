@@ -56,6 +56,20 @@
       .theme-darkblue .text-bg-warning { background-color: color-mix(in oklab, var(--warning) 25%, black) !important; color: #fff7ed !important; }
       .theme-darkblue .text-bg-danger { background-color: color-mix(in oklab, var(--danger) 25%, black) !important; color: #ffe4e6 !important; }
       .theme-darkblue .text-bg-secondary { background-color: #111827 !important; color: #cfd8ff !important; }
+
+      /* ASCII logo styling */
+      .ascii-logo { 
+        line-height: 1.05; 
+        font-size: 13px; 
+        color: var(--primary); 
+        background: transparent; 
+        border: 1px dashed var(--border); 
+        border-radius: 8px; 
+        padding: 12px; 
+        overflow: auto;
+        user-select: text;
+      }
+      @media (min-width: 768px) { .ascii-logo { font-size: 15px; } }
     </style>
   </head>
   <body class="bg-body-tertiary">
@@ -72,6 +86,15 @@
       </div>
     </nav>
     <main class="container my-4">
+      <div class="mb-3">
+        <pre class="mono ascii-logo">  ___  ____  ___ _   _ _____    _____           _ 
+ / _ \|  _ \|_ _| \ | |_   _|  |_   _|__   ___ | |
+| | | | |_) || ||  \| | | |_____| |/ _ \ / _ \| |
+| |_| |  _ < | || . ` | | |_____| | (_) | (_) | |
+ \___/|_| \_\___|_|\__| |_|     |_|\___/ \___/|_|
+           OSINT Tool
+        </pre>
+      </div>
       <ul class="nav nav-tabs" id="osintTabs" role="tablist">
         <li class="nav-item" role="presentation">
           <button class="nav-link active" id="tab-domain" data-bs-toggle="tab" data-bs-target="#pane-domain" type="button" role="tab">Domain</button>
