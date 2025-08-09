@@ -87,12 +87,11 @@
     </nav>
     <main class="container my-4">
       <div class="mb-3">
-        <pre class="mono ascii-logo">  ___  ____  ___ _   _ _____    _____           _ 
- / _ \|  _ \|_ _| \ | |_   _|  |_   _|__   ___ | |
-| | | | |_) || ||  \| | | |_____| |/ _ \ / _ \| |
-| |_| |  _ < | || . ` | | |_____| | (_) | (_) | |
- \___/|_| \_\___|_|\__| |_|     |_|\___/ \___/|_|
-           OSINT Tool
+        <pre class="mono ascii-logo">                    ___  ____ ___ _   _ _____   _____ ___   ___  _     
+                   / _ \\/ ___|_ _| \ | |_   _| |_   _/ _ \\ / _ \\| |    
+                  | | | \\___ \\| ||  \\| | | |     | || | | | | | | |    
+                  | |_| |___) | || |\\  | | |     | || |_| | |_| | |___ 
+                   \\___/|____/___|_| \\_| |_|     |_| \\___/ \\___/|_____|
         </pre>
       </div>
       <ul class="nav nav-tabs" id="osintTabs" role="tablist">
@@ -388,9 +387,9 @@
         try {
           const data = await postJSON('/api/username', {username});
           const rows = (data.results||[]).sort((a,b)=>a.site.localeCompare(b.site)).map(i => [
-            esc(i.site),
+            i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noreferrer">${esc(i.site)}</a>` : esc(i.site),
             badge(i.status),
-            i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noreferrer">link</a>` : '<span class="muted">—</span>'
+            i.url ? `<span class="mono">${esc(i.url)}</span>` : '<span class="muted">—</span>'
           ]);
           el('user_out').innerHTML = renderTable(['Site','Status','URL'], rows);
         } catch(e) {
@@ -402,16 +401,33 @@
         el('email_out').innerHTML = '<div class="text-secondary small">Loading…</div>';
         try {
           const data = await postJSON('/api/email', {address});
-          const valid = data.valid_syntax ? '<span class="badge ok">valid</span>' : '<span class="badge err">invalid</span>';
-          const grav = data.gravatar?.exists ? `<img class="avatar" src="${esc(data.gravatar.url)}" alt="gravatar" />` : '<span class="muted">no gravatar</span>';
-          el('email_out').innerHTML = `
-            <div class="grid">
-              <div class="card"><div class="card-body">
-                <h5 class="card-title">Email</h5>
-                <div class="d-flex align-items-center gap-2"><div class="mono">${esc(data.address)}</div><div>${valid}</div></div>
-              </div></div>
-              <div class="card"><div class="card-body"><h5 class="card-title">Gravatar</h5><div class="d-flex align-items-center gap-2">${grav}</div></div></div>
-            </div>`;
+          const valid = data.valid_syntax ? '<span class="badge rounded-pill text-bg-success">valid</span>' : '<span class="badge rounded-pill text-bg-danger">invalid</span>';
+          const grav = data.gravatar?.exists ? `<a href="${esc(data.gravatar.url)}" target="_blank" rel="noreferrer"><img class="avatar" src="${esc(data.gravatar.url)}" alt="gravatar" /></a>` : '<span class="muted">no gravatar</span>';
+          
+          const emailCard = `<div class="card"><div class="card-body">
+            <h5 class="card-title">Email</h5>
+            <div class="d-flex align-items-center gap-2"><div class="mono"><a href="mailto:${esc(data.address)}">${esc(data.address)}</a></div><div>${valid}</div></div>
+          </div></div>`;
+          
+          const gravatarCard = `<div class="card"><div class="card-body">
+            <h5 class="card-title">Gravatar</h5>
+            <div class="d-flex align-items-center gap-2">${grav}</div>
+          </div></div>`;
+          
+          let socialTable = '';
+          if (data.social_results && data.social_results.length > 0) {
+            const rows = data.social_results.sort((a,b)=>a.site.localeCompare(b.site)).map(i => [
+              i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noreferrer">${esc(i.site)}</a>` : esc(i.site),
+              badge(i.status),
+              i.url ? `<span class="mono">${esc(i.url)}</span>` : '<span class="muted">—</span>'
+            ]);
+            socialTable = `<div class="card"><div class="card-body">
+              <h5 class="card-title">Social Media Accounts</h5>
+              ${renderTable(['Site','Status','URL'], rows)}
+            </div></div>`;
+          }
+          
+          el('email_out').innerHTML = `<div class="grid">${emailCard}${gravatarCard}</div>${socialTable}`;
         } catch(e) {
           el('email_out').innerHTML = `<div class="alert alert-danger" role="alert">${esc(e.message)}</div>`;
         }

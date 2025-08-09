@@ -241,6 +241,24 @@ DEFAULT_SITES: Dict[str, str] = {
     "devto": "https://dev.to/{username}",
     "stackoverflow": "https://stackoverflow.com/users/{username}",
     "telegram": "https://t.me/{username}",
+    # Additional popular platforms
+    "youtube": "https://www.youtube.com/@{username}",
+    "twitch": "https://www.twitch.tv/{username}",
+    "soundcloud": "https://soundcloud.com/{username}",
+    "bitbucket": "https://bitbucket.org/{username}",
+    "npm": "https://www.npmjs.com/~{username}",
+    "pypi": "https://pypi.org/user/{username}",
+    "kaggle": "https://www.kaggle.com/{username}",
+    "hackerrank": "https://www.hackerrank.com/{username}",
+    "leetcode": "https://leetcode.com/{username}",
+    "keybase": "https://keybase.io/{username}",
+    "behance": "https://www.behance.net/{username}",
+    "dribbble": "https://dribbble.com/{username}",
+    "flickr": "https://www.flickr.com/people/{username}",
+    "producthunt": "https://www.producthunt.com/@{username}",
+    "angel": "https://angel.co/u/{username}",
+    "tryhackme": "https://tryhackme.com/p/{username}",
+    "hackerone": "https://hackerone.com/{username}",
 }
 
 

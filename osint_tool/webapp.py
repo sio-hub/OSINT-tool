@@ -108,10 +108,17 @@ def api_email(payload: Dict[str, object]) -> JSONResponse:
         exists = r.status_code == 200
     except Exception:
         exists = False
+    
+    # Also check for social media accounts using the email
+    username = address.split('@')[0] if '@' in address else address
+    social_results = _safe_run(_check_usernames(username, DEFAULT_SITES))
+    social_data = [{"site": s, "status": st, "url": u} for (s, st, u) in social_results]
+    
     return JSONResponse({
         "address": address,
         "valid_syntax": is_valid,
         "gravatar": {"exists": exists, "url": gravatar_url if exists else None},
+        "social_results": social_data,
     })
 
 
