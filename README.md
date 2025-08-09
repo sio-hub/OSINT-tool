@@ -25,6 +25,8 @@ python -m pip install -r requirements.txt
 
 # Optional: copy and fill tokens if you have them
 Copy-Item .env.example .env
+# For AI features (OpenAI):
+setx OPENAI_API_KEY "YOUR_API_KEY_HERE"
 ```
 
 If PowerShell complains about scripts:
@@ -70,6 +72,7 @@ Then open `http://127.0.0.1:8000`.
 Web tips:
 - There’s a **theme toggle** in the navbar. Dark is default (because night ops). Light is there if you must.
 - Domain/IP/Username/Email/GitHub all have clean card/table views; no raw JSON unless you want it.
+- New AI tab: Summarize a target or ask questions against the gathered context.
 
 ### Running without activating the venv
 ```powershell
@@ -89,6 +92,7 @@ Add these to `.env` if available (they’re optional):
 - **IPINFO_TOKEN**: enriches IP lookups via `ipinfo.io`
 - **HIBP_API_KEY**: HaveIBeenPwned (paid API)
 - **SHODAN_API_KEY**: Shodan (future integrations)
+- **OPENAI_API_KEY**: Enables AI summarize/Q&A in the Web UI
 
 ## Troubleshooting (keep it stealthy)
 - “No module named uvicorn” → You’re using the wrong Python. Activate the venv or run the venv’s Python directly.
@@ -107,6 +111,11 @@ Add these to `.env` if available (they’re optional):
 - Port 8000 is busy → change the port:
   ```powershell
   python -m uvicorn osint_tool.webapp:app --reload --port 8001
+  ```
+- AI errors complaining about credentials → set your key:
+  ```powershell
+  setx OPENAI_API_KEY "YOUR_API_KEY_HERE"
+  # then restart the terminal so the change takes effect
   ```
 
 ## What’s inside

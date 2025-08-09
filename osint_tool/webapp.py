@@ -9,6 +9,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from dotenv import load_dotenv
 
 from . import __version__
 from .cli import (
@@ -29,6 +30,7 @@ STATIC_DIR = ROOT_DIR / "web_static"
 
 app = FastAPI(title="OSINT Tool Web", version=__version__)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+load_dotenv(override=False)
 
 
 @app.get("/")
@@ -121,6 +123,35 @@ def api_github(payload: Dict[str, object]) -> JSONResponse:
     data = _safe_run(_github_user_data(user))
     return JSONResponse({"user": user, **data})
 
+@app.post("/api/subdomains")
+def api_subdomains(payload: Dict[str, object]) -> JSONResponse:
+    domain = str(payload.get("domain", "")).strip()
+    resolve = bool(payload.get("resolve", False))
+    try:
+        limit = int(payload.get("limit", 200))
+    except Exception:
+        limit = 200
+    if not domain:
+        raise HTTPException(status_code=400, detail="'domain' is required")
+    subs = _safe_run(_fetch_crtsh(domain))
+    if limit and limit > 0:
+        subs = subs[:limit]
+    if not resolve:
+        return JSONResponse({"domain": domain, "count": len(subs), "subdomains": subs})
+    # Resolve A records for each subdomain (best-effort, short timeout)
+    from dns import resolver
+    results: List[Dict[str, object]] = []
+    for host in subs:
+        ips: List[str] = []
+        try:
+            answers = resolver.resolve(host, "A", lifetime=3.0)
+            for r in answers:
+                ips.append(str(r))
+        except Exception:
+            pass
+        results.append({"host": host, "ips": ips})
+    return JSONResponse({"domain": domain, "count": len(results), "results": results})
+
 
 # ----------------------
 # AI endpoints (OpenAI)
@@ -130,21 +161,23 @@ class AISummarizePayload(BaseModel):
     target: str
     kind: str  # domain|ip|username|email|github
     max_tokens: int | None = 400
+    api_key: Optional[str] = None
 
 
 class AIAskPayload(BaseModel):
     question: str
     context: Dict[str, object] | None = None
     max_tokens: int | None = 400
+    api_key: Optional[str] = None
 
 
-def _openai_client():
+def _openai_client(override_key: Optional[str] = None):
     import os
     from openai import OpenAI
 
-    key = os.getenv("OPENAI_API_KEY")
+    key = override_key or os.getenv("OPENAI_API_KEY")
     if not key:
-        raise HTTPException(status_code=500, detail="OPENAI_API_KEY not set")
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY not set. Set it in your env or .env, then restart the server.")
     return OpenAI(api_key=key)
 
 
@@ -185,45 +218,55 @@ def _gather_context(kind: str, target: str) -> Dict[str, object]:
     raise HTTPException(status_code=400, detail="Unsupported kind")
 
 
-def _summarize_with_openai(context: Dict[str, object], max_tokens: int | None = 400) -> str:
-    client = _openai_client()
-    system = (
-        "You are an OSINT analyst. Summarize key findings from the JSON context, "
-        "highlighting risks, infrastructure, presence, and anomalies. Provide concise bullets and 3 recommended next actions."
-    )
-    user = (
-        "Context (JSON):\n" + str(context) + "\n\n"
-        "Output in markdown with headings: Findings, Recommendations. Keep it tight."
-    )
-    res = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
-        max_tokens=max_tokens or 400,
-        temperature=0.2,
-    )
-    return res.choices[0].message.content or ""
+def _summarize_with_openai(context: Dict[str, object], max_tokens: int | None = 400, api_key: Optional[str] = None) -> str:
+    try:
+        client = _openai_client(api_key)
+        system = (
+            "You are an OSINT analyst. Summarize key findings from the JSON context, "
+            "highlighting risks, infrastructure, presence, and anomalies. Provide concise bullets and 3 recommended next actions."
+        )
+        user = (
+            "Context (JSON):\n" + str(context) + "\n\n"
+            "Output in markdown with headings: Findings, Recommendations. Keep it tight."
+        )
+        res = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+            max_tokens=max_tokens or 400,
+            temperature=0.2,
+        )
+        return res.choices[0].message.content or ""
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"OpenAI error: {type(exc).__name__}")
 
 
 @app.post("/api/ai/summarize")
 def api_ai_summarize(payload: AISummarizePayload) -> JSONResponse:
     context = _gather_context(payload.kind, payload.target)
-    summary = _summarize_with_openai(context, payload.max_tokens)
+    summary = _summarize_with_openai(context, payload.max_tokens, payload.api_key)
     return JSONResponse({"target": payload.target, "kind": payload.kind, "summary_md": summary, "context": context})
 
 
 @app.post("/api/ai/ask")
 def api_ai_ask(payload: AIAskPayload) -> JSONResponse:
-    client = _openai_client()
-    system = "You are a precise OSINT assistant. Answer strictly from the provided context."
-    context_str = str(payload.context or {})
-    prompt = f"Context (JSON):\n{context_str}\n\nQuestion: {payload.question}\nAnswer concisely in bullet points."
-    res = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "system", "content": system}, {"role": "user", "content": prompt}],
-        max_tokens=payload.max_tokens or 400,
-        temperature=0.2,
-    )
-    return JSONResponse({"answer_md": res.choices[0].message.content or ""})
+    try:
+        client = _openai_client(payload.api_key)
+        system = "You are a precise OSINT assistant. Answer strictly from the provided context."
+        context_str = str(payload.context or {})
+        prompt = f"Context (JSON):\n{context_str}\n\nQuestion: {payload.question}\nAnswer concisely in bullet points."
+        res = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "system", "content": system}, {"role": "user", "content": prompt}],
+            max_tokens=payload.max_tokens or 400,
+            temperature=0.2,
+        )
+        return JSONResponse({"answer_md": res.choices[0].message.content or ""})
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"OpenAI error: {type(exc).__name__}")
 
 if __name__ == "__main__":
     import uvicorn
