@@ -1,179 +1,217 @@
-## OSINT-tool
+# OSINT Tool
 
- A sleek Python OSINT toolkit with a no-nonsense CLI and a modern web UI (dark by default, obviously).
+A sleek Python OSINT toolkit with a no-nonsense CLI and a modern web UI (dark by default, obviously).
 
-### What it does
-- **Domain**: WHOIS, DNS records, certificate-transparency subdomains (crt.sh)
-- **IP**: IP info (ipinfo.io if token present), geolocation (ip-api), reverse DNS (PTR)
-- **Username**: Presence checks across popular platforms (best-effort, no scraping)
-- **Email**: Syntax validation, Gravatar lookup
-- **GitHub**: User profile + recent repos
+## Features
 
-### Requirements
-- Python 3.9+
-- Windows PowerShell recommended (works anywhere Python works)
-- Optional: OpenAI API key for AI features (or enter it directly in the web UI)
+- **Domain Intelligence**: WHOIS lookup, DNS records, subdomain enumeration
+- **IP Analysis**: Geolocation, reverse DNS, ISP details
+- **Username Hunting**: Check 20+ social media platforms for username availability
+- **Email Validation**: Syntax check, Gravatar lookup, social media presence
+- **GitHub Recon**: User profiles, repositories, activity analysis
+- **AI Integration**: OpenAI-powered summarization and Q&A over gathered intel
+- **Web Interface**: Modern dark-themed UI with real-time results
 
-## Install and run
+## Quick Start
 
-### Quickstart (copy/paste)
-```powershell
-cd C:\Users\sion\Documents\GitHub\OSINT-tool
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-python -m uvicorn osint_tool.webapp:app --reload --host 127.0.0.1 --port 8000
-# Open http://127.0.0.1:8000
-```
+### Prerequisites
+- Python 3.8+ installed
+- Git (for cloning)
 
-### 1) Setup the virtual environment
-```powershell
-cd C:\Users\sion\Documents\GitHub\OSINT-tool
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+### Installation
 
-# Optional: copy and fill tokens if you have them
-Copy-Item .env.example .env
-# For AI features (OpenAI):
-setx OPENAI_API_KEY "YOUR_API_KEY_HERE"
-```
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd OSINT-tool
+   ```
 
-If PowerShell complains about scripts:
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-```
+2. **Create virtual environment**
+   ```bash
+   python -m venv .venv
+   ```
 
-### 2) Run the CLI (terminal mode)
-```powershell
-# Discover commands
-python -m osint_tool --help
+3. **Activate virtual environment**
+   
+   **Windows:**
+   ```bash
+   .\.venv\Scripts\activate
+   ```
+   
+   **macOS/Linux:**
+   ```bash
+   source .venv/bin/activate
+   ```
 
-# Version
-python -m osint_tool version
+4. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-# Domain intel
-python -m osint_tool domain example.com --whois --dns --subdomains
+## Usage
 
-# IP intel
-python -m osint_tool ip 8.8.8.8 --details --reverse
+### Command Line Interface
 
-# Username presence
+The CLI provides quick OSINT checks from your terminal:
+
+```bash
+# Domain intelligence
+python -m osint_tool domain example.com
+
+# IP analysis
+python -m osint_tool ip 8.8.8.8
+
+# Username hunting
 python -m osint_tool username johndoe
 
-# Email checks
-python -m osint_tool email someone@example.com
+# Email validation
+python -m osint_tool email user@example.com
 
-# GitHub user
+# GitHub recon
 python -m osint_tool github torvalds
 ```
 
-CLI tips:
-- WHOIS prints a concise summary by default. Prefer the full dossier? Add `--no-whois-summary`.
-- Lists are formatted for human eyes — no brackets soup.
+### Web Interface
 
-### 3) Run the Web UI (dark and delightful)
-```powershell
-# Using the venv’s Python
-python -m uvicorn osint_tool.webapp:app --reload --host 127.0.0.1 --port 8000
+For a more comprehensive experience with real-time results:
+
+1. **Start the web server**
+   ```bash
+   python -m osint_tool.webapp
+   ```
+
+2. **Open your browser**
+   Navigate to: `http://127.0.0.1:8000`
+
+3. **Use the interface**
+   - Switch between tabs for different OSINT functions
+   - Enter your target (domain, IP, username, email, etc.)
+   - Click "Run" to execute the search
+   - View results in real-time with clickable links
+
+### AI Features (Optional)
+
+To enable AI-powered analysis:
+
+1. **Get an OpenAI API key**
+   - Visit [OpenAI Platform](https://platform.openai.com/api-keys)
+   - Create a new API key
+
+2. **Configure the API key**
+   
+   **Option A: Environment variable**
+   ```bash
+   # Windows
+   set OPENAI_API_KEY=sk-your-key-here
+   
+   # macOS/Linux
+   export OPENAI_API_KEY=sk-your-key-here
+   ```
+   
+   **Option B: .env file**
+   Create a `.env` file in the project root:
+   ```
+   OPENAI_API_KEY=sk-your-key-here
+   ```
+   
+   **Option C: Web UI**
+   - Enter your API key directly in the AI tab
+   - No need to save it permanently
+
+3. **Use AI features**
+   - Go to the "AI" tab in the web interface
+   - Enter your target and select the type
+   - Click "Summarize" for AI analysis
+   - Ask follow-up questions with "Ask"
+
+## Supported Platforms
+
+### Username Hunting
+- Twitter/X, Instagram, Facebook, LinkedIn
+- GitHub, GitLab, Bitbucket
+- YouTube, Twitch, TikTok
+- Reddit, Discord, Telegram
+- And 10+ more platforms
+
+### Email Features
+- Syntax validation
+- Gravatar profile lookup
+- Social media presence detection
+
+### Domain Intelligence
+- WHOIS registration details
+- DNS records (A, AAAA, MX, NS, TXT, CNAME)
+- Certificate transparency subdomain enumeration
+
+### IP Analysis
+- Geolocation data
+- ISP and organization info
+- Reverse DNS lookup
+- Proxy/VPN detection
+
+## Troubleshooting
+
+### Common Issues
+
+**"No module named pip"**
+```bash
+python -m ensurepip --upgrade
+python -m pip install --upgrade pip setuptools wheel
 ```
-Then open `http://127.0.0.1:8000`.
 
-Web tips:
-- There’s a **theme toggle** in the navbar. Dark is default (because night ops). Light is there if you must.
-- Tabs: Domain, IP, Username, Email, GitHub, Subdomains, AI.
-- Domain/IP/Username/Email/GitHub all have clean card/table views.
-- Subdomains tab: enter domain, adjust limit, optionally resolve A records, then Run.
-- AI tab: either set `OPENAI_API_KEY` in your environment or paste your key in the field, then Summarize or Ask.
+**Build errors on Windows**
+- Install Microsoft Visual C++ Build Tools
+- Or use the pre-built wheels: `pip install --only-binary=all -r requirements.txt`
 
-### Running without activating the venv
-```powershell
-C:\Users\sion\Documents\GitHub\OSINT-tool\.venv\Scripts\python -m pip install -r requirements.txt
-C:\Users\sion\Documents\GitHub\OSINT-tool\.venv\Scripts\python -m uvicorn osint_tool.webapp:app --reload --host 127.0.0.1 --port 8000
+**API key not working**
+- Verify your OpenAI API key is correct
+- Check your account has credits
+- Try entering the key directly in the web UI
+
+**Web server won't start**
+- Ensure you're in the virtual environment
+- Check port 8000 isn't already in use
+- Try a different port: `uvicorn osint_tool.webapp:app --port 8001`
+
+### Getting Help
+
+1. Check the error messages in the terminal
+2. Verify all dependencies are installed
+3. Ensure you're using the virtual environment
+4. Check your internet connection for API calls
+
+## Development
+
+### Project Structure
+```
+OSINT-tool/
+├── osint_tool/
+│   ├── __init__.py
+│   ├── __main__.py
+│   ├── cli.py          # CLI commands and core logic
+│   ├── webapp.py       # FastAPI web application
+│   └── web_static/
+│       └── index.html  # Web interface
+├── requirements.txt    # Python dependencies
+└── README.md
 ```
 
-### Simple static server (UI only)
-If you just want to preview the UI without the API, serve the static files:
-```powershell
-python -m http.server 8000 -d osint_tool/web_static
-```
-Open `http://127.0.0.1:8000`. Note: buttons will fail because the API isn’t running. To use the full app, start uvicorn as shown above.
+### Adding New Features
+1. Extend the CLI functions in `cli.py`
+2. Add corresponding API endpoints in `webapp.py`
+3. Update the web interface in `index.html`
+4. Test both CLI and web interfaces
 
-## Optional environment variables
-Add these to `.env` if available (they’re optional):
-- **IPINFO_TOKEN**: enriches IP lookups via `ipinfo.io`
-- **HIBP_API_KEY**: HaveIBeenPwned (paid API)
-- **SHODAN_API_KEY**: Shodan (future integrations)
-- **OPENAI_API_KEY**: Enables AI summarize/Q&A in the Web UI
+## Security Notes
 
-## Troubleshooting (keep it stealthy)
-- “No module named uvicorn” → You’re using the wrong Python. Activate the venv or run the venv’s Python directly.
-  ```powershell
-  .\.venv\Scripts\Activate.ps1
-  python -m pip install uvicorn==0.30.6
-  ```
-- “Activation is disabled” → Relax, and run:
-  ```powershell
-  Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-  ```
-- pip missing in venv →
-  ```powershell
-  .\.venv\Scripts\python -m ensurepip --upgrade
-  ```
-- Port 8000 is busy → change the port:
-  ```powershell
-  python -m uvicorn osint_tool.webapp:app --reload --port 8001
-  ```
-- AI errors complaining about credentials → set your key:
-  ```powershell
-  setx OPENAI_API_KEY "YOUR_API_KEY_HERE"
-  # then restart the terminal so the change takes effect
-  ```
- - Alternatively, paste your key directly into the AI tab’s “OpenAI API Key” field (sent only for that request).
+- This tool is for legitimate OSINT research only
+- Respect rate limits and terms of service
+- Don't use for malicious purposes
+- API keys are stored locally only
+- All requests are made from your machine
 
-## Feature guide
+## License
 
-### Subdomains enumeration
-- UI: Subdomains tab → enter `example.com` → choose limit → toggle “Resolve A records” if needed → Run.
-- API: `POST /api/subdomains` with `{ domain: "example.com", limit: 200, resolve: true }`.
-- CLI: `python -m osint_tool domain example.com --subdomains` (lists from crt.sh).
-
-### AI summarize and Q&A
-- UI: AI tab → enter target + kind (domain/ip/username/email/github).
-  - Provide `OPENAI_API_KEY` via environment (recommended) or paste into the API key field.
-  - Click Summarize to get Findings + Recommendations; Ask to query the context.
-- API:
-  - `POST /api/ai/summarize` body: `{ target, kind, api_key? }`
-  - `POST /api/ai/ask` body: `{ question, context, api_key? }`
-- Notes:
-  - Data you enter may be sent to OpenAI if you use cloud AI. Avoid sensitive info or use a local model (we can switch to Ollama on request).
-
-## What’s inside
-- `osint_tool/cli.py` — the CLI commands (domain, ip, username, email, github)
-- `osint_tool/webapp.py` — FastAPI app serving API + static UI
-- `osint_tool/web_static/index.html` — the modern UI with dark blue/black palette and theme toggle
-- `requirements.txt` — dependencies
-- `.env.example` — optional tokens
-
-## Roadmap (call your shots)
-- More data providers (Shodan, VirusTotal, HIBP direct)
-- Export to JSON/CSV from the web UI
-- Caching and rate-limit awareness
-- Docker + one-liner deploy
-
-If you want any of these right now, ask — we’ll gear up and ship.
-
-### Optional environment variables
-Create a `.env` file (see `.env.example`).
-
-- IPINFO_TOKEN: token for `ipinfo.io`
-- HIBP_API_KEY: HaveIBeenPwned API key (optional, paid)
-- SHODAN_API_KEY: Shodan API key (optional)
-
-### Notes
-- Be mindful of rate limits and terms of service of third-party services.
-- This tool performs lightweight, non-invasive HTTP requests; scraping and login-required data are out of scope.
+This project is for educational and legitimate research purposes only. Use responsibly and in accordance with applicable laws and terms of service.
 
 
