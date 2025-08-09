@@ -1,35 +1,45 @@
 ## OSINT-tool
 
-Python-based OSINT CLI to gather publicly available information about domains, IPs, usernames, emails, and GitHub users. Designed to be modular and API-key optional so you can start quickly and enrich as you go.
+Because the best intel is gathered after dark. A sleek Python OSINT toolkit with a no-nonsense CLI and a modern web UI (dark by default, obviously).
 
-### Features
-- Domain: WHOIS, DNS records, certificate transparency subdomain discovery (crt.sh)
-- IP: IP info (ipinfo.io if token provided), geolocation (ip-api), reverse DNS (PTR)
-- Username: Check presence across common platforms via HTTP checks
-- Email: Basic validation and Gravatar existence check; optional HaveIBeenPwned if API key provided
-- GitHub: User profile and repositories
+### What it does
+- **Domain**: WHOIS, DNS records, certificate-transparency subdomains (crt.sh)
+- **IP**: IP info (ipinfo.io if token present), geolocation (ip-api), reverse DNS (PTR)
+- **Username**: Presence checks across popular platforms (best-effort, no scraping)
+- **Email**: Syntax validation, Gravatar lookup
+- **GitHub**: User profile + recent repos
 
 ### Requirements
 - Python 3.9+
+- Windows PowerShell recommended (works anywhere Python works)
 
-### Quick start
-```bash
+## Install and run
+
+### 1) Setup the virtual environment
+```powershell
+cd C:\Users\sion\Documents\GitHub\OSINT-tool
 python -m venv .venv
-. .venv/Scripts/activate  # On Windows PowerShell: .venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 
-# Optional: copy and fill environment variables
-copy .env.example .env  # On PowerShell
-
-# See commands
-python -m osint_tool --help
-
-# Start web app (FastAPI)
-python -m uvicorn osint_tool.webapp:app --reload
+# Optional: copy and fill tokens if you have them
+Copy-Item .env.example .env
 ```
 
-### Usage examples
-```bash
+If PowerShell complains about scripts:
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+```
+
+### 2) Run the CLI (terminal mode)
+```powershell
+# Discover commands
+python -m osint_tool --help
+
+# Version
+python -m osint_tool version
+
 # Domain intel
 python -m osint_tool domain example.com --whois --dns --subdomains
 
@@ -39,19 +49,73 @@ python -m osint_tool ip 8.8.8.8 --details --reverse
 # Username presence
 python -m osint_tool username johndoe
 
-# Email quick checks
+# Email checks
 python -m osint_tool email someone@example.com
 
 # GitHub user
 python -m osint_tool github torvalds
 ```
 
-### Web UI
-- Start server:
-  ```bash
-  uvicorn osint_tool.webapp:app --reload
+CLI tips:
+- WHOIS prints a concise summary by default. Prefer the full dossier? Add `--no-whois-summary`.
+- Lists are formatted for human eyes — no brackets soup.
+
+### 3) Run the Web UI (dark and delightful)
+```powershell
+# Using the venv’s Python
+python -m uvicorn osint_tool.webapp:app --reload --host 127.0.0.1 --port 8000
+```
+Then open `http://127.0.0.1:8000`.
+
+Web tips:
+- There’s a **theme toggle** in the navbar. Dark is default (because night ops). Light is there if you must.
+- Domain/IP/Username/Email/GitHub all have clean card/table views; no raw JSON unless you want it.
+
+### Running without activating the venv
+```powershell
+C:\Users\sion\Documents\GitHub\OSINT-tool\.venv\Scripts\python -m pip install -r requirements.txt
+C:\Users\sion\Documents\GitHub\OSINT-tool\.venv\Scripts\python -m uvicorn osint_tool.webapp:app --reload --host 127.0.0.1 --port 8000
+```
+
+## Optional environment variables
+Add these to `.env` if available (they’re optional):
+- **IPINFO_TOKEN**: enriches IP lookups via `ipinfo.io`
+- **HIBP_API_KEY**: HaveIBeenPwned (paid API)
+- **SHODAN_API_KEY**: Shodan (future integrations)
+
+## Troubleshooting (keep it stealthy)
+- “No module named uvicorn” → You’re using the wrong Python. Activate the venv or run the venv’s Python directly.
+  ```powershell
+  .\.venv\Scripts\Activate.ps1
+  python -m pip install uvicorn==0.30.6
   ```
-- Open `http://127.0.0.1:8000` in your browser.
+- “Activation is disabled” → Relax, and run:
+  ```powershell
+  Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+  ```
+- pip missing in venv →
+  ```powershell
+  .\.venv\Scripts\python -m ensurepip --upgrade
+  ```
+- Port 8000 is busy → change the port:
+  ```powershell
+  python -m uvicorn osint_tool.webapp:app --reload --port 8001
+  ```
+
+## What’s inside
+- `osint_tool/cli.py` — the CLI commands (domain, ip, username, email, github)
+- `osint_tool/webapp.py` — FastAPI app serving API + static UI
+- `osint_tool/web_static/index.html` — the modern UI with dark blue/black palette and theme toggle
+- `requirements.txt` — dependencies
+- `.env.example` — optional tokens
+
+## Roadmap (call your shots)
+- More data providers (Shodan, VirusTotal, HIBP direct)
+- Export to JSON/CSV from the web UI
+- Caching and rate-limit awareness
+- Docker + one-liner deploy
+
+If you want any of these right now, ask — we’ll gear up and ship.
 
 ### Optional environment variables
 Create a `.env` file (see `.env.example`).
