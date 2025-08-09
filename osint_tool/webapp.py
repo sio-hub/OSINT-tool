@@ -8,6 +8,7 @@ from typing import Dict, List, Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 from . import __version__
 from .cli import (
@@ -120,6 +121,109 @@ def api_github(payload: Dict[str, object]) -> JSONResponse:
     data = _safe_run(_github_user_data(user))
     return JSONResponse({"user": user, **data})
 
+
+# ----------------------
+# AI endpoints (OpenAI)
+# ----------------------
+
+class AISummarizePayload(BaseModel):
+    target: str
+    kind: str  # domain|ip|username|email|github
+    max_tokens: int | None = 400
+
+
+class AIAskPayload(BaseModel):
+    question: str
+    context: Dict[str, object] | None = None
+    max_tokens: int | None = 400
+
+
+def _openai_client():
+    import os
+    from openai import OpenAI
+
+    key = os.getenv("OPENAI_API_KEY")
+    if not key:
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY not set")
+    return OpenAI(api_key=key)
+
+
+def _gather_context(kind: str, target: str) -> Dict[str, object]:
+    kind = (kind or "").lower().strip()
+    if kind == "domain":
+        return {
+            "domain": target,
+            "whois": _domain_whois(target),
+            "dns": _domain_dns(target),
+            "subdomains": _safe_run(_fetch_crtsh(target))[:100],
+        }
+    if kind == "ip":
+        return {
+            "ip": target,
+            "ptr": _ip_reverse_ptr(target),
+            "details": _safe_run(_ip_info(target)),
+        }
+    if kind == "username":
+        results = _safe_run(_check_usernames(target, DEFAULT_SITES))
+        return {"username": target, "results": results}
+    if kind == "email":
+        # reuse email logic minimalistically
+        import hashlib, httpx, re
+        email_re = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
+        is_valid = bool(email_re.match(target))
+        md5 = hashlib.md5(target.lower().encode("utf-8")).hexdigest()
+        url = f"https://www.gravatar.com/avatar/{md5}?d=404&s=64"
+        exists = False
+        try:
+            r = httpx.get(url, timeout=6.0)
+            exists = r.status_code == 200
+        except Exception:
+            pass
+        return {"address": target, "valid_syntax": is_valid, "gravatar": {"exists": exists}}
+    if kind == "github":
+        return {"user": target, **_safe_run(_github_user_data(target))}
+    raise HTTPException(status_code=400, detail="Unsupported kind")
+
+
+def _summarize_with_openai(context: Dict[str, object], max_tokens: int | None = 400) -> str:
+    client = _openai_client()
+    system = (
+        "You are an OSINT analyst. Summarize key findings from the JSON context, "
+        "highlighting risks, infrastructure, presence, and anomalies. Provide concise bullets and 3 recommended next actions."
+    )
+    user = (
+        "Context (JSON):\n" + str(context) + "\n\n"
+        "Output in markdown with headings: Findings, Recommendations. Keep it tight."
+    )
+    res = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+        max_tokens=max_tokens or 400,
+        temperature=0.2,
+    )
+    return res.choices[0].message.content or ""
+
+
+@app.post("/api/ai/summarize")
+def api_ai_summarize(payload: AISummarizePayload) -> JSONResponse:
+    context = _gather_context(payload.kind, payload.target)
+    summary = _summarize_with_openai(context, payload.max_tokens)
+    return JSONResponse({"target": payload.target, "kind": payload.kind, "summary_md": summary, "context": context})
+
+
+@app.post("/api/ai/ask")
+def api_ai_ask(payload: AIAskPayload) -> JSONResponse:
+    client = _openai_client()
+    system = "You are a precise OSINT assistant. Answer strictly from the provided context."
+    context_str = str(payload.context or {})
+    prompt = f"Context (JSON):\n{context_str}\n\nQuestion: {payload.question}\nAnswer concisely in bullet points."
+    res = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "system", "content": system}, {"role": "user", "content": prompt}],
+        max_tokens=payload.max_tokens or 400,
+        temperature=0.2,
+    )
+    return JSONResponse({"answer_md": res.choices[0].message.content or ""})
 
 if __name__ == "__main__":
     import uvicorn
