@@ -1,6 +1,6 @@
 ## OSINT-tool
 
-Because the best intel is gathered after dark. A sleek Python OSINT toolkit with a no-nonsense CLI and a modern web UI (dark by default, obviously).
+ A sleek Python OSINT toolkit with a no-nonsense CLI and a modern web UI (dark by default, obviously).
 
 ### What it does
 - **Domain**: WHOIS, DNS records, certificate-transparency subdomains (crt.sh)
@@ -76,6 +76,13 @@ Web tips:
 C:\Users\sion\Documents\GitHub\OSINT-tool\.venv\Scripts\python -m pip install -r requirements.txt
 C:\Users\sion\Documents\GitHub\OSINT-tool\.venv\Scripts\python -m uvicorn osint_tool.webapp:app --reload --host 127.0.0.1 --port 8000
 ```
+
+### Simple static server (UI only)
+If you just want to preview the UI without the API, serve the static files:
+```powershell
+python -m http.server 8000 -d osint_tool/web_static
+```
+Open `http://127.0.0.1:8000`. Note: buttons will fail because the API isn’t running. To use the full app, start uvicorn as shown above.
 
 ## Optional environment variables
 Add these to `.env` if available (they’re optional):
