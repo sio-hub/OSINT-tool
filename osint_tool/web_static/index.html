@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OSINT Tool Web</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 0; }
+      header { padding: 16px 20px; border-bottom: 1px solid #ddd; }
+      main { padding: 20px; max-width: 1100px; margin: 0 auto; }
+      h1 { margin: 0; font-size: 20px; }
+      section { margin-bottom: 24px; border: 1px solid #e5e5e5; border-radius: 8px; padding: 16px; }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      input, select, button, textarea { padding: 8px 10px; font-size: 14px; }
+      button { cursor: pointer; }
+      label { font-weight: 600; margin-right: 8px; }
+
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+      .card { border: 1px solid #e5e5e5; border-radius: 8px; padding: 12px; }
+      .card h4 { margin: 0 0 8px 0; font-size: 14px; }
+      .kv { margin: 0; padding: 0; list-style: none; }
+      .kv li { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; border-bottom: 1px dashed #eee; }
+      .kv li:last-child { border-bottom: 0; }
+      table { width: 100%; border-collapse: collapse; font-size: 14px; }
+      th, td { border-bottom: 1px solid #eee; padding: 6px 8px; text-align: left; }
+      .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+      .ok { background: #e6ffed; color: #03643c; border: 1px solid #b7f5c9; }
+      .warn { background: #fff7e6; color: #915b00; border: 1px solid #ffe1a3; }
+      .err { background: #ffe6e6; color: #8a0016; border: 1px solid #ffb3bf; }
+      .muted { color: #6b7280; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .avatar { width: 48px; height: 48px; border-radius: 50%; border: 1px solid #ddd; }
+      .flex { display: flex; align-items: center; gap: 10px; }
+      .small { font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>OSINT Tool Web</h1>
+    </header>
+    <main>
+      <section>
+        <h3>Domain</h3>
+        <div class="row">
+          <label>Domain</label>
+          <input id="domain" placeholder="example.com" />
+          <label><input type="checkbox" id="d_whois" checked /> WHOIS</label>
+          <label><input type="checkbox" id="d_dns" checked /> DNS</label>
+          <label><input type="checkbox" id="d_subs" /> Subdomains</label>
+          <button onclick="runDomain()">Run</button>
+        </div>
+        <div id="domain_out"></div>
+      </section>
+
+      <section>
+        <h3>IP</h3>
+        <div class="row">
+          <label>IP</label>
+          <input id="ip" placeholder="8.8.8.8" />
+          <label><input type="checkbox" id="i_details" checked /> Details</label>
+          <label><input type="checkbox" id="i_reverse" checked /> Reverse</label>
+          <button onclick="runIP()">Run</button>
+        </div>
+        <div id="ip_out"></div>
+      </section>
+
+      <section>
+        <h3>Username</h3>
+        <div class="row">
+          <label>Username</label>
+          <input id="username" placeholder="johndoe" />
+          <button onclick="runUsername()">Run</button>
+        </div>
+        <div id="user_out"></div>
+      </section>
+
+      <section>
+        <h3>Email</h3>
+        <div class="row">
+          <label>Email</label>
+          <input id="email" placeholder="someone@example.com" />
+          <button onclick="runEmail()">Run</button>
+        </div>
+        <div id="email_out"></div>
+      </section>
+
+      <section>
+        <h3>GitHub</h3>
+        <div class="row">
+          <label>User</label>
+          <input id="ghuser" placeholder="torvalds" />
+          <button onclick="runGitHub()">Run</button>
+        </div>
+        <div id="gh_out"></div>
+      </section>
+    </main>
+
+    <script>
+      async function postJSON(url, body) {
+        const r = await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+        if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+        return r.json();
+      }
+      const el = (id) => document.getElementById(id);
+      const esc = (s) => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+      function renderKVCard(title, obj, keys) {
+        const items = keys
+          .map(k => `<li><span class="muted">${esc(k)}</span><span class="mono">${esc(obj?.[k]) || '<span class="muted">—</span>'}</span></li>`) 
+          .join('');
+        return `<div class="card"><h4>${esc(title)}</h4><ul class="kv">${items}</ul></div>`;
+      }
+
+      function renderListCard(title, list) {
+        const items = (list ?? []).map(v => `<li class="mono">${esc(v)}</li>`).join('');
+        return `<div class="card"><h4>${esc(title)}</h4><ul class="kv">${items || '<li class="muted">(none)</li>'}</ul></div>`;
+      }
+
+      function renderDNS(dns) {
+        if (!dns) return '<div class="muted small">No DNS data</div>';
+        const parts = Object.entries(dns).map(([rtype, values]) => renderListCard(`DNS ${rtype}`, values));
+        return `<div class="grid">${parts.join('')}</div>`;
+      }
+
+      function badge(status) {
+        if (status === 'exists') return '<span class="badge ok">exists</span>';
+        if (status === 'not found') return '<span class="badge err">not found</span>';
+        if (status === 'maybe') return '<span class="badge warn">maybe</span>';
+        if (status === 'rate limited') return '<span class="badge warn">rate limited</span>';
+        if (status === 'timeout') return '<span class="badge warn">timeout</span>';
+        return `<span class="badge">${esc(status)}</span>`;
+      }
+
+      function renderTable(headers, rows) {
+        const head = `<tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr>`;
+        const body = rows.map(r => `<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('');
+        return `<table>${head}${body}</table>`;
+      }
+      async function runDomain(){
+        const domain = document.getElementById('domain').value.trim();
+        const whois = document.getElementById('d_whois').checked;
+        const dns = document.getElementById('d_dns').checked;
+        const subs = document.getElementById('d_subs').checked;
+        el('domain_out').innerHTML = '<span class="small muted">Loading…</span>';
+        try {
+          const data = await postJSON('/api/domain', {domain, whois, dns, subdomains: subs});
+          const whoisCard = whois ? renderKVCard('WHOIS summary', data.whois || {}, ['domain_name','registrar','creation_date','expiration_date','updated_date']) : '';
+          const dnsCards = dns ? renderDNS(data.dns) : '';
+          const subsCard = subs ? renderListCard(`Subdomains (${(data.subdomains||[]).length})`, data.subdomains) : '';
+          el('domain_out').innerHTML = `<div class="grid">${whoisCard}${subsCard}</div>${dnsCards}`;
+        } catch(e) {
+          el('domain_out').innerHTML = `<div class="badge err">${esc(e.message)}</div>`;
+        }
+      }
+      async function runIP(){
+        const ip = document.getElementById('ip').value.trim();
+        const details = document.getElementById('i_details').checked;
+        const reverse = document.getElementById('i_reverse').checked;
+        el('ip_out').innerHTML = '<span class="small muted">Loading…</span>';
+        try {
+          const data = await postJSON('/api/ip', {ip, details, reverse});
+          const ptrCard = renderKVCard('Reverse DNS', {ptr: data.ptr || '—'}, ['ptr']);
+          let infoGrid = '';
+          if (details && data.details) {
+            const ipinfo = data.details.ipinfo || {};
+            const ipapi = data.details.ipapi || {};
+            const ipinfoCard = renderKVCard('ipinfo.io', ipinfo, ['ip','org','city','region','country','loc','hostname']);
+            const ipapiCard = renderKVCard('ip-api.com', ipapi, ['country','regionName','city','isp','org','as','reverse','proxy','hosting']);
+            infoGrid = `<div class="grid">${ipinfoCard}${ipapiCard}</div>`;
+          }
+          el('ip_out').innerHTML = `<div class="grid">${ptrCard}</div>${infoGrid}`;
+        } catch(e) {
+          el('ip_out').innerHTML = `<div class="badge err">${esc(e.message)}</div>`;
+        }
+      }
+      async function runUsername(){
+        const username = document.getElementById('username').value.trim();
+        el('user_out').innerHTML = '<span class="small muted">Loading…</span>';
+        try {
+          const data = await postJSON('/api/username', {username});
+          const rows = (data.results||[]).sort((a,b)=>a.site.localeCompare(b.site)).map(i => [
+            esc(i.site),
+            badge(i.status),
+            i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noreferrer">link</a>` : '<span class="muted">—</span>'
+          ]);
+          el('user_out').innerHTML = renderTable(['Site','Status','URL'], rows);
+        } catch(e) {
+          el('user_out').innerHTML = `<div class="badge err">${esc(e.message)}</div>`;
+        }
+      }
+      async function runEmail(){
+        const address = document.getElementById('email').value.trim();
+        el('email_out').innerHTML = '<span class="small muted">Loading…</span>';
+        try {
+          const data = await postJSON('/api/email', {address});
+          const valid = data.valid_syntax ? '<span class="badge ok">valid</span>' : '<span class="badge err">invalid</span>';
+          const grav = data.gravatar?.exists ? `<img class="avatar" src="${esc(data.gravatar.url)}" alt="gravatar" />` : '<span class="muted">no gravatar</span>';
+          el('email_out').innerHTML = `
+            <div class="grid">
+              <div class="card">
+                <h4>Email</h4>
+                <div class="flex"><div class="mono">${esc(data.address)}</div><div>${valid}</div></div>
+              </div>
+              <div class="card"><h4>Gravatar</h4><div class="flex">${grav}</div></div>
+            </div>`;
+        } catch(e) {
+          el('email_out').innerHTML = `<div class="badge err">${esc(e.message)}</div>`;
+        }
+      }
+      async function runGitHub(){
+        const user = document.getElementById('ghuser').value.trim();
+        el('gh_out').innerHTML = '<span class="small muted">Loading…</span>';
+        try {
+          const data = await postJSON('/api/github', {user});
+          const u = data.user || {};
+          const profile = u.user || u; // endpoint returns { user: user, repos: [...] }
+          const profileCard = `
+            <div class="card">
+              <h4>Profile</h4>
+              <div class="kv">
+                <div class="flex">
+                  ${profile.avatar_url ? `<img class="avatar" src="${esc(profile.avatar_url)}" alt="avatar" />` : ''}
+                  <div>
+                    <div><strong>${esc(profile.name || '')}</strong> <span class="muted">@${esc(profile.login || '')}</span></div>
+                    <div class="small muted">${esc(profile.bio || '')}</div>
+                  </div>
+                </div>
+                <ul class="kv" style="margin-top:8px">
+                  <li><span class="muted">Company</span><span class="mono">${esc(profile.company || '—')}</span></li>
+                  <li><span class="muted">Location</span><span class="mono">${esc(profile.location || '—')}</span></li>
+                  <li><span class="muted">Blog</span><span class="mono">${profile.blog ? `<a href="${esc(profile.blog)}" target="_blank" rel="noreferrer">${esc(profile.blog)}</a>` : '—'}</span></li>
+                  <li><span class="muted">Followers</span><span class="mono">${esc(profile.followers ?? '—')}</span></li>
+                  <li><span class="muted">Following</span><span class="mono">${esc(profile.following ?? '—')}</span></li>
+                  <li><span class="muted">Public Repos</span><span class="mono">${esc(profile.public_repos ?? '—')}</span></li>
+                </ul>
+              </div>
+            </div>`;
+          const repos = (data.repos || u.repos || []).slice(0, 20);
+          const rows = repos.map(r => [
+            r.name ? `<a href="https://github.com/${esc(profile.login)}/${esc(r.name)}" target="_blank" rel="noreferrer">${esc(r.name)}</a>` : '—',
+            esc(r.language || '—'),
+            esc(r.stargazers_count ?? '0'),
+            esc(r.updated_at || '—')
+          ]);
+          const reposTable = `<div class="card"><h4>Repositories</h4>${renderTable(['Name','Lang','★','Updated'], rows)}</div>`;
+          el('gh_out').innerHTML = `<div class="grid">${profileCard}${reposTable}</div>`;
+        } catch(e) {
+          el('gh_out').innerHTML = `<div class="badge err">${esc(e.message)}</div>`;
+        }
+      }
+    </script>
+  </body>
+  </html>
+
+
