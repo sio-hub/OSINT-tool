@@ -12,8 +12,20 @@
 ### Requirements
 - Python 3.9+
 - Windows PowerShell recommended (works anywhere Python works)
+- Optional: OpenAI API key for AI features (or enter it directly in the web UI)
 
 ## Install and run
+
+### Quickstart (copy/paste)
+```powershell
+cd C:\Users\sion\Documents\GitHub\OSINT-tool
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m uvicorn osint_tool.webapp:app --reload --host 127.0.0.1 --port 8000
+# Open http://127.0.0.1:8000
+```
 
 ### 1) Setup the virtual environment
 ```powershell
@@ -71,8 +83,10 @@ Then open `http://127.0.0.1:8000`.
 
 Web tips:
 - There’s a **theme toggle** in the navbar. Dark is default (because night ops). Light is there if you must.
-- Domain/IP/Username/Email/GitHub all have clean card/table views; no raw JSON unless you want it.
-- New AI tab: Summarize a target or ask questions against the gathered context.
+- Tabs: Domain, IP, Username, Email, GitHub, Subdomains, AI.
+- Domain/IP/Username/Email/GitHub all have clean card/table views.
+- Subdomains tab: enter domain, adjust limit, optionally resolve A records, then Run.
+- AI tab: either set `OPENAI_API_KEY` in your environment or paste your key in the field, then Summarize or Ask.
 
 ### Running without activating the venv
 ```powershell
@@ -117,6 +131,24 @@ Add these to `.env` if available (they’re optional):
   setx OPENAI_API_KEY "YOUR_API_KEY_HERE"
   # then restart the terminal so the change takes effect
   ```
+ - Alternatively, paste your key directly into the AI tab’s “OpenAI API Key” field (sent only for that request).
+
+## Feature guide
+
+### Subdomains enumeration
+- UI: Subdomains tab → enter `example.com` → choose limit → toggle “Resolve A records” if needed → Run.
+- API: `POST /api/subdomains` with `{ domain: "example.com", limit: 200, resolve: true }`.
+- CLI: `python -m osint_tool domain example.com --subdomains` (lists from crt.sh).
+
+### AI summarize and Q&A
+- UI: AI tab → enter target + kind (domain/ip/username/email/github).
+  - Provide `OPENAI_API_KEY` via environment (recommended) or paste into the API key field.
+  - Click Summarize to get Findings + Recommendations; Ask to query the context.
+- API:
+  - `POST /api/ai/summarize` body: `{ target, kind, api_key? }`
+  - `POST /api/ai/ask` body: `{ question, context, api_key? }`
+- Notes:
+  - Data you enter may be sent to OpenAI if you use cloud AI. Avoid sensitive info or use a local model (we can switch to Ollama on request).
 
 ## What’s inside
 - `osint_tool/cli.py` — the CLI commands (domain, ip, username, email, github)
