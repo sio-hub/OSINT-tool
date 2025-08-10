@@ -108,12 +108,8 @@
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="tab-email" data-bs-toggle="tab" data-bs-target="#pane-email" type="button" role="tab">Email</button>
         </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="tab-github" data-bs-toggle="tab" data-bs-target="#pane-github" type="button" role="tab">GitHub</button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="tab-subdomains" data-bs-toggle="tab" data-bs-target="#pane-subdomains" type="button" role="tab">Subdomains</button>
-        </li>
+        
+        
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="tab-ai" data-bs-toggle="tab" data-bs-target="#pane-ai" type="button" role="tab">AI</button>
         </li>
@@ -196,39 +192,9 @@
           <div class="mt-3" id="email_out"></div>
         </div>
 
-        <div class="tab-pane fade" id="pane-github" role="tabpanel">
-          <div class="row g-3 align-items-end">
-            <div class="col-sm-6">
-              <label class="form-label">GitHub User</label>
-              <input class="form-control" id="ghuser" placeholder="torvalds" />
-            </div>
-            <div class="col-sm-2 text-end">
-              <button class="btn btn-primary w-100" onclick="runGitHub()">Run</button>
-            </div>
-          </div>
-          <div class="mt-3" id="gh_out"></div>
-        </div>
+        
 
-        <div class="tab-pane fade" id="pane-subdomains" role="tabpanel">
-          <div class="row g-3 align-items-end">
-            <div class="col-sm-6">
-              <label class="form-label">Domain</label>
-              <input class="form-control" id="subs_domain" placeholder="example.com" />
-            </div>
-            <div class="col-sm-3">
-              <label class="form-label">Limit</label>
-              <input class="form-control" id="subs_limit" type="number" value="200" />
-            </div>
-            <div class="col-sm-2 form-check align-self-center mt-4">
-              <input class="form-check-input" type="checkbox" id="subs_resolve">
-              <label class="form-check-label" for="subs_resolve">Resolve A records</label>
-            </div>
-            <div class="col-sm-1 text-end">
-              <button class="btn btn-primary w-100" onclick="runSubdomains()">Run</button>
-            </div>
-          </div>
-          <div class="mt-3" id="subs_out"></div>
-        </div>
+        
 
         <div class="tab-pane fade" id="pane-ai" role="tabpanel">
           <div class="row g-3 align-items-end">
@@ -337,6 +303,7 @@
         if (status === 'maybe') return '<span class="badge rounded-pill text-bg-warning">maybe</span>';
         if (status === 'rate limited') return '<span class="badge rounded-pill text-bg-warning">rate limited</span>';
         if (status === 'timeout') return '<span class="badge rounded-pill text-bg-warning">timeout</span>';
+        if (status === 'error') return '<span class="badge rounded-pill text-bg-secondary">error</span>';
         return `<span class="badge rounded-pill text-bg-secondary">${esc(status)}</span>`;
       }
 
@@ -415,84 +382,26 @@
             <div class="d-flex align-items-center gap-2">${grav}</div>
           </div></div>`;
           
-          let socialTable = '';
-          if (data.social_results && data.social_results.length > 0) {
-            const rows = data.social_results.sort((a,b)=>a.site.localeCompare(b.site)).map(i => [
-              i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noreferrer">${esc(i.site)}</a>` : esc(i.site),
-              badge(i.status),
-              i.url ? `<span class="mono">${esc(i.url)}</span>` : '<span class="muted">—</span>'
-            ]);
-            socialTable = `<div class="card"><div class="card-body">
-              <h5 class="card-title">Social Media Accounts</h5>
-              ${renderTable(['Site','Status','URL'], rows)}
-            </div></div>`;
-          }
+                     let socialTable = '';
+           if (data.social_results && data.social_results.length > 0) {
+             const rows = data.social_results.sort((a,b)=>a.site.localeCompare(b.site)).map(i => [
+               i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noreferrer">${esc(i.site)}</a>` : esc(i.site),
+               i.url ? `<span class="mono">${esc(i.url)}</span>` : '<span class="muted">—</span>'
+             ]);
+             socialTable = `<div class="card"><div class="card-body">
+               <h5 class="card-title">Social Media Accounts</h5>
+               ${renderTable(['Site','URL'], rows)}
+             </div></div>`;
+           }
           
           el('email_out').innerHTML = `<div class="grid">${emailCard}${gravatarCard}</div>${socialTable}`;
         } catch(e) {
           el('email_out').innerHTML = `<div class="alert alert-danger" role="alert">${esc(e.message)}</div>`;
         }
       }
-      async function runGitHub(){
-        const user = document.getElementById('ghuser').value.trim();
-        el('gh_out').innerHTML = '<div class="text-secondary small">Loading…</div>';
-        try {
-          const data = await postJSON('/api/github', {user});
-          const u = data.user || {};
-          const profile = u.user || u; // endpoint returns { user: user, repos: [...] }
-          const profileCard = `
-            <div class="card"><div class="card-body">
-              <h5 class="card-title">Profile</h5>
-              <div class="kv">
-                <div class="d-flex align-items-center gap-3">
-                  ${profile.avatar_url ? `<img class="avatar" src="${esc(profile.avatar_url)}" alt="avatar" />` : ''}
-                  <div>
-                    <div class="fw-semibold">${esc(profile.name || '')} <span class="text-secondary">@${esc(profile.login || '')}</span></div>
-                    <div class="small text-secondary">${esc(profile.bio || '')}</div>
-                  </div>
-                </div>
-                <ul class="kv mt-2">
-                  <li><span class="muted">Company</span><span class="mono">${esc(profile.company || '—')}</span></li>
-                  <li><span class="muted">Location</span><span class="mono">${esc(profile.location || '—')}</span></li>
-                  <li><span class="muted">Blog</span><span class="mono">${profile.blog ? `<a href="${esc(profile.blog)}" target="_blank" rel="noreferrer">${esc(profile.blog)}</a>` : '—'}</span></li>
-                  <li><span class="muted">Followers</span><span class="mono">${esc(profile.followers ?? '—')}</span></li>
-                  <li><span class="muted">Following</span><span class="mono">${esc(profile.following ?? '—')}</span></li>
-                  <li><span class="muted">Public Repos</span><span class="mono">${esc(profile.public_repos ?? '—')}</span></li>
-                </ul>
-              </div>
-            </div></div>`;
-          const repos = (data.repos || u.repos || []).slice(0, 20);
-          const rows = repos.map(r => [
-            r.name ? `<a href="https://github.com/${esc(profile.login)}/${esc(r.name)}" target="_blank" rel="noreferrer">${esc(r.name)}</a>` : '—',
-            esc(r.language || '—'),
-            esc(r.stargazers_count ?? '0'),
-            esc(r.updated_at || '—')
-          ]);
-          const reposTable = `<div class="card"><div class="card-body"><h5 class="card-title">Repositories</h5>${renderTable(['Name','Lang','★','Updated'], rows)}</div></div>`;
-          el('gh_out').innerHTML = `<div class="grid">${profileCard}${reposTable}</div>`;
-        } catch(e) {
-          el('gh_out').innerHTML = `<div class="alert alert-danger" role="alert">${esc(e.message)}</div>`;
-        }
-      }
+      
 
-      async function runSubdomains(){
-        const domain = el('subs_domain').value.trim();
-        const limit = parseInt(el('subs_limit').value || '200', 10);
-        const resolve = el('subs_resolve').checked;
-        el('subs_out').innerHTML = '<div class="text-secondary small">Enumerating…</div>';
-        try {
-          const data = await postJSON('/api/subdomains', { domain, limit, resolve });
-          if (!resolve) {
-            const rows = (data.subdomains||[]).map(h => [ `<span class="mono">${esc(h)}</span>` ]);
-            el('subs_out').innerHTML = renderTable(['Host'], rows);
-          } else {
-            const rows = (data.results||[]).map(r => [ `<span class="mono">${esc(r.host)}</span>`, `<span class="mono">${esc((r.ips||[]).join(', ')||'—')}</span>` ]);
-            el('subs_out').innerHTML = renderTable(['Host','A records'], rows);
-          }
-        } catch(e) {
-          el('subs_out').innerHTML = `<div class="alert alert-danger" role="alert">${esc(e.message)}</div>`;
-        }
-      }
+      
 
       function renderMarkdown(md) {
         // Minimal markdown to HTML (headings + bullets). Keep it simple to avoid extra deps.
