@@ -75,6 +75,8 @@ python -m osint_tool github torvalds
 
 For a more comprehensive experience with real-time results:
 
+#### Option 1: FastAPI Server (Recommended)
+
 1. **Start the web server**
    ```bash
    python -m osint_tool.webapp
@@ -82,6 +84,18 @@ For a more comprehensive experience with real-time results:
 
 2. **Open your browser**
    Navigate to: `http://127.0.0.1:8000`
+
+#### Option 2: Simple HTTP Server
+
+1. **Start the simple server**
+   ```bash
+   python simple_server.py
+   ```
+
+2. **Open your browser**
+   Navigate to: `http://127.0.0.1:8000`
+
+**Note**: The simple server includes additional features like phone number lookup that aren't available in the FastAPI version.
 
 3. **Use the interface**
    - Switch between tabs for different OSINT functions
@@ -192,6 +206,7 @@ OSINT-tool/
 │   ├── webapp.py       # FastAPI web application
 │   └── web_static/
 │       └── index.html  # Web interface
+├── simple_server.py    # Simple HTTP server (alternative)
 ├── requirements.txt    # Python dependencies
 └── README.md
 ```
