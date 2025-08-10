@@ -105,14 +105,16 @@
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="tab-username" data-bs-toggle="tab" data-bs-target="#pane-username" type="button" role="tab">Username</button>
         </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="tab-email" data-bs-toggle="tab" data-bs-target="#pane-email" type="button" role="tab">Email</button>
-        </li>
-        
-        
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="tab-ai" data-bs-toggle="tab" data-bs-target="#pane-ai" type="button" role="tab">AI</button>
-        </li>
+                 <li class="nav-item" role="presentation">
+           <button class="nav-link" id="tab-email" data-bs-toggle="tab" data-bs-target="#pane-email" type="button" role="tab">Email</button>
+         </li>
+         <li class="nav-item" role="presentation">
+           <button class="nav-link" id="tab-phone" data-bs-toggle="tab" data-bs-target="#pane-phone" type="button" role="tab">Phone</button>
+         </li>
+         
+         <li class="nav-item" role="presentation">
+           <button class="nav-link" id="tab-ai" data-bs-toggle="tab" data-bs-target="#pane-ai" type="button" role="tab">AI</button>
+         </li>
       </ul>
 
       <div class="tab-content border border-top-0 bg-body rounded-bottom p-3">
@@ -179,18 +181,31 @@
           <div class="mt-3" id="user_out"></div>
         </div>
 
-        <div class="tab-pane fade" id="pane-email" role="tabpanel">
-          <div class="row g-3 align-items-end">
-            <div class="col-sm-6">
-              <label class="form-label">Email</label>
-              <input class="form-control" id="email" placeholder="someone@example.com" />
-            </div>
-            <div class="col-sm-2 text-end">
-              <button class="btn btn-primary w-100" onclick="runEmail()">Run</button>
-            </div>
-          </div>
-          <div class="mt-3" id="email_out"></div>
-        </div>
+                 <div class="tab-pane fade" id="pane-email" role="tabpanel">
+           <div class="row g-3 align-items-end">
+             <div class="col-sm-6">
+               <label class="form-label">Email</label>
+               <input class="form-control" id="email" placeholder="someone@example.com" />
+             </div>
+             <div class="col-sm-2 text-end">
+               <button class="btn btn-primary w-100" onclick="runEmail()">Run</button>
+             </div>
+           </div>
+           <div class="mt-3" id="email_out"></div>
+         </div>
+
+         <div class="tab-pane fade" id="pane-phone" role="tabpanel">
+           <div class="row g-3 align-items-end">
+             <div class="col-sm-6">
+               <label class="form-label">Phone Number</label>
+               <input class="form-control" id="phone" placeholder="+1234567890" />
+             </div>
+             <div class="col-sm-2 text-end">
+               <button class="btn btn-primary w-100" onclick="runPhone()">Run</button>
+             </div>
+           </div>
+           <div class="mt-3" id="phone_out"></div>
+         </div>
 
         
 
@@ -364,41 +379,83 @@
           el('user_out').innerHTML = `<div class="alert alert-danger" role="alert">${esc(e.message)}</div>`;
         }
       }
-      async function runEmail(){
-        const address = document.getElementById('email').value.trim();
-        el('email_out').innerHTML = '<div class="text-secondary small">Loading…</div>';
-        try {
-          const data = await postJSON('/api/email', {address});
-          const valid = data.valid_syntax ? '<span class="badge rounded-pill text-bg-success">valid</span>' : '<span class="badge rounded-pill text-bg-danger">invalid</span>';
-          const grav = data.gravatar?.exists ? `<a href="${esc(data.gravatar.url)}" target="_blank" rel="noreferrer"><img class="avatar" src="${esc(data.gravatar.url)}" alt="gravatar" /></a>` : '<span class="muted">no gravatar</span>';
-          
-          const emailCard = `<div class="card"><div class="card-body">
-            <h5 class="card-title">Email</h5>
-            <div class="d-flex align-items-center gap-2"><div class="mono"><a href="mailto:${esc(data.address)}">${esc(data.address)}</a></div><div>${valid}</div></div>
-          </div></div>`;
-          
-          const gravatarCard = `<div class="card"><div class="card-body">
-            <h5 class="card-title">Gravatar</h5>
-            <div class="d-flex align-items-center gap-2">${grav}</div>
-          </div></div>`;
-          
-                     let socialTable = '';
-           if (data.social_results && data.social_results.length > 0) {
-             const rows = data.social_results.sort((a,b)=>a.site.localeCompare(b.site)).map(i => [
-               i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noreferrer">${esc(i.site)}</a>` : esc(i.site),
-               i.url ? `<span class="mono">${esc(i.url)}</span>` : '<span class="muted">—</span>'
-             ]);
-             socialTable = `<div class="card"><div class="card-body">
-               <h5 class="card-title">Social Media Accounts</h5>
-               ${renderTable(['Site','URL'], rows)}
+             async function runEmail(){
+         const address = document.getElementById('email').value.trim();
+         el('email_out').innerHTML = '<div class="text-secondary small">Loading…</div>';
+         try {
+           const data = await postJSON('/api/email', {address});
+           const valid = data.valid_syntax ? '<span class="badge rounded-pill text-bg-success">valid</span>' : '<span class="badge rounded-pill text-bg-danger">invalid</span>';
+           const grav = data.gravatar?.exists ? `<a href="${esc(data.gravatar.url)}" target="_blank" rel="noreferrer"><img class="avatar" src="${esc(data.gravatar.url)}" alt="gravatar" /></a>` : '<span class="muted">no gravatar</span>';
+           
+           const emailCard = `<div class="card"><div class="card-body">
+             <h5 class="card-title">Email</h5>
+             <div class="d-flex align-items-center gap-2"><div class="mono"><a href="mailto:${esc(data.address)}">${esc(data.address)}</a></div><div>${valid}</div></div>
+           </div></div>`;
+           
+           const gravatarCard = `<div class="card"><div class="card-body">
+             <h5 class="card-title">Gravatar</h5>
+             <div class="d-flex align-items-center gap-2">${grav}</div>
+           </div></div>`;
+           
+                      let socialTable = '';
+            if (data.social_results && data.social_results.length > 0) {
+              const rows = data.social_results.sort((a,b)=>a.site.localeCompare(b.site)).map(i => [
+                i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noreferrer">${esc(i.site)}</a>` : esc(i.site),
+                i.url ? `<span class="mono">${esc(i.url)}</span>` : '<span class="muted">—</span>'
+              ]);
+              socialTable = `<div class="card"><div class="card-body">
+                <h5 class="card-title">Social Media Accounts</h5>
+                ${renderTable(['Site','URL'], rows)}
+              </div></div>`;
+            }
+           
+           el('email_out').innerHTML = `<div class="grid">${emailCard}${gravatarCard}</div>${socialTable}`;
+         } catch(e) {
+           el('email_out').innerHTML = `<div class="alert alert-danger" role="alert">${esc(e.message)}</div>`;
+         }
+       }
+
+       async function runPhone(){
+         const phone = document.getElementById('phone').value.trim();
+         el('phone_out').innerHTML = '<div class="text-secondary small">Loading…</div>';
+         try {
+           const data = await postJSON('/api/phone', {phone});
+           
+           const phoneCard = `<div class="card"><div class="card-body">
+             <h5 class="card-title">Phone Number</h5>
+             <div class="d-flex align-items-center gap-2"><div class="mono"><a href="tel:${esc(data.phone)}">${esc(data.phone)}</a></div></div>
+           </div></div>`;
+           
+           let carrierCard = '';
+           if (data.carrier_info) {
+             carrierCard = `<div class="card"><div class="card-body">
+               <h5 class="card-title">Carrier Information</h5>
+               <ul class="kv">
+                 <li><span class="muted">Carrier</span><span class="mono">${esc(data.carrier_info.carrier || '—')}</span></li>
+                 <li><span class="muted">Country</span><span class="mono">${esc(data.carrier_info.country || '—')}</span></li>
+                 <li><span class="muted">Type</span><span class="mono">${esc(data.carrier_info.type || '—')}</span></li>
+                 <li><span class="muted">Valid</span><span class="mono">${data.carrier_info.valid ? 'Yes' : 'No'}</span></li>
+               </ul>
              </div></div>`;
            }
-          
-          el('email_out').innerHTML = `<div class="grid">${emailCard}${gravatarCard}</div>${socialTable}`;
-        } catch(e) {
-          el('email_out').innerHTML = `<div class="alert alert-danger" role="alert">${esc(e.message)}</div>`;
-        }
-      }
+           
+           let searchResults = '';
+           if (data.search_results && data.search_results.length > 0) {
+             const rows = data.search_results.map(result => [
+               `<a href="${esc(result.url)}" target="_blank" rel="noreferrer">${esc(result.title)}</a>`,
+               `<span class="mono">${esc(result.url)}</span>`
+             ]);
+             searchResults = `<div class="card"><div class="card-body">
+               <h5 class="card-title">Web Search Results</h5>
+               ${renderTable(['Title','URL'], rows)}
+             </div></div>`;
+           }
+           
+           el('phone_out').innerHTML = `<div class="grid">${phoneCard}${carrierCard}</div>${searchResults}`;
+         } catch(e) {
+           el('phone_out').innerHTML = `<div class="alert alert-danger" role="alert">${esc(e.message)}</div>`;
+         }
+       }
       
 
       

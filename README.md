@@ -1,270 +1,157 @@
 # OSINT Tool
 
-A comprehensive Python OSINT toolkit with both command-line interface and modern web UI for gathering intelligence on domains, IPs, usernames, emails, and GitHub users.
+A sleek Python OSINT toolkit with a no-nonsense CLI and a modern web UI (dark by default, obviously).
 
-## 🚀 Features
+## Features
 
 - **Domain Intelligence**: WHOIS lookup, DNS records, subdomain enumeration
-- **IP Analysis**: Geolocation, reverse DNS, ISP details, proxy detection
-- **Username Hunting**: Check 13+ social media platforms for username availability
+- **IP Analysis**: Geolocation, reverse DNS, ISP details
+- **Username Hunting**: Check 20+ social media platforms for username availability
 - **Email Validation**: Syntax check, Gravatar lookup, social media presence
+- **GitHub Recon**: User profiles, repositories, activity analysis
 - **AI Integration**: OpenAI-powered summarization and Q&A over gathered intel
 - **Web Interface**: Modern dark-themed UI with real-time results
 
-## 📋 Prerequisites
+## Quick Start
 
-Before you begin, ensure you have:
+### Prerequisites
+- Python 3.8+ installed
+- Git (for cloning)
 
-- **Python 3.8 or higher** installed on your system
-- **Git** (for cloning the repository)
-- **Internet connection** (for API calls and lookups)
-- **OpenAI API key** (optional, for AI features)
+### Installation
 
-### Checking Your Python Version
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd OSINT-tool
+   ```
 
-**Windows:**
-```bash
-python --version
-```
+2. **Create virtual environment**
+   ```bash
+   python -m venv .venv
+   ```
 
-**macOS/Linux:**
-```bash
-python3 --version
-```
+3. **Activate virtual environment**
+   
+   **Windows:**
+   ```bash
+   .\.venv\Scripts\activate
+   ```
+   
+   **macOS/Linux:**
+   ```bash
+   source .venv/bin/activate
+   ```
 
-If Python is not installed, download it from [python.org](https://www.python.org/downloads/).
+4. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## 🛠️ Installation
+## Usage
 
-### Step 1: Clone the Repository
+### Command Line Interface
 
-```bash
-git clone https://github.com/yourusername/OSINT-tool.git
-cd OSINT-tool
-```
-
-### Step 2: Create a Virtual Environment
-
-**Windows:**
-```bash
-python -m venv .venv
-```
-
-**macOS/Linux:**
-```bash
-python3 -m venv .venv
-```
-
-### Step 3: Activate the Virtual Environment
-
-**Windows (Command Prompt):**
-```bash
-.\.venv\Scripts\activate
-```
-
-**Windows (PowerShell):**
-```bash
-.\.venv\Scripts\Activate.ps1
-```
-
-**macOS/Linux:**
-```bash
-source .venv/bin/activate
-```
-
-You'll know it's activated when you see `(.venv)` at the beginning of your command prompt.
-
-### Step 4: Install Dependencies
+The CLI provides quick OSINT checks from your terminal:
 
 ```bash
-pip install -r requirements.txt
+# Domain intelligence
+python -m osint_tool domain example.com
+
+# IP analysis
+python -m osint_tool ip 8.8.8.8
+
+# Username hunting
+python -m osint_tool username johndoe
+
+# Email validation
+python -m osint_tool email user@example.com
+
+# GitHub recon
+python -m osint_tool github torvalds
 ```
 
-This will install all required packages including:
-- `typer` - CLI framework
-- `rich` - Terminal formatting
-- `httpx` - HTTP client
-- `fastapi` - Web framework
-- `uvicorn` - ASGI server
-- `openai` - OpenAI API client
-- And more...
+### Web Interface
 
-### Step 5: Verify Installation
+For a more comprehensive experience with real-time results:
 
-Test that everything is working:
+1. **Start the web server**
+   ```bash
+   python -m osint_tool.webapp
+   ```
 
-```bash
-python cli.py --help
-```
+2. **Open your browser**
+   Navigate to: `http://127.0.0.1:8000`
 
-You should see the help menu with available commands.
+3. **Use the interface**
+   - Switch between tabs for different OSINT functions
+   - Enter your target (domain, IP, username, email, etc.)
+   - Click "Run" to execute the search
+   - View results in real-time with clickable links
 
-## 🎯 Usage
+### AI Features (Optional)
 
-### Quick Start - Web Interface (Recommended)
+To enable AI-powered analysis:
 
-The easiest way to use the OSINT Tool is through the web interface. It provides a modern, user-friendly interface with real-time results.
+1. **Get an OpenAI API key**
+   - Visit [OpenAI Platform](https://platform.openai.com/api-keys)
+   - Create a new API key
 
-#### Step 1: Start the Web Server
+2. **Configure the API key**
+   
+   **Option A: Environment variable**
+   ```bash
+   # Windows
+   set OPENAI_API_KEY=sk-your-key-here
+   
+   # macOS/Linux
+   export OPENAI_API_KEY=sk-your-key-here
+   ```
+   
+   **Option B: .env file**
+   Create a `.env` file in the project root:
+   ```
+   OPENAI_API_KEY=sk-your-key-here
+   ```
+   
+   **Option C: Web UI**
+   - Enter your API key directly in the AI tab
+   - No need to save it permanently
 
-Make sure your virtual environment is activated, then run:
-
-```bash
-python simple_server.py
-```
-
-You should see output like:
-```
-OSINT Tool server running on http://localhost:8000
-Press Ctrl+C to stop the server
-```
-
-#### Step 2: Access the Web Interface
-
-Open your web browser and navigate to:
-```
-http://127.0.0.1:8000
-```
-
-#### Step 3: Use the Interface
-
-The web interface has 5 main tabs:
-
-1. **Domain Tab**: 
-   - Enter a domain name (e.g., `example.com`)
-   - Check WHOIS information, DNS records, and subdomains
-   - Select which features to run with checkboxes
-
-2. **IP Tab**: 
-   - Enter an IP address (e.g., `8.8.8.8`)
-   - Get geolocation, ISP details, and reverse DNS
-   - Choose between basic and detailed analysis
-
-3. **Username Tab**: 
-   - Enter a username (e.g., `johndoe`)
-   - Check availability across 13+ social media platforms
-   - See which platforms the username exists on
-
-4. **Email Tab**: 
-   - Enter an email address (e.g., `user@example.com`)
-   - Validate email syntax and check for Gravatar
-   - Find social media accounts using the email username
-
-5. **AI Tab**: 
-   - Get AI-powered analysis of your findings
-   - Ask questions about the gathered intelligence
-   - Requires OpenAI API key (optional)
-
-#### Step 4: Stop the Server
-
-Press `Ctrl+C` in the terminal to stop the web server.
-
-### Command Line Interface (CLI)
-
-For quick checks or automation, you can also use the command line interface:
-
-#### Domain Intelligence
-
-```bash
-# Basic domain lookup
-python cli.py domain example.com
-
-# Domain with subdomain discovery
-python cli.py domain example.com --subdomains
-
-# Domain with only DNS records (no WHOIS)
-python cli.py domain example.com --no-whois
-
-# Domain with only WHOIS (no DNS)
-python cli.py domain example.com --no-dns
-```
-
-#### IP Address Analysis
-
-```bash
-# Basic IP lookup
-python cli.py ip 8.8.8.8
-
-# IP with only reverse DNS
-python cli.py ip 8.8.8.8 --no-details
-
-# IP with only geolocation details
-python cli.py ip 8.8.8.8 --no-reverse
-```
-
-#### Username Hunting
-
-```bash
-# Check username across all platforms
-python cli.py username johndoe
-
-# Check specific platforms only
-python cli.py username johndoe --sites twitter,github,instagram
-```
-
-#### Email Validation
-
-```bash
-# Validate email address
-python cli.py email user@example.com
-```
-
-## 🤖 AI Features Setup
-
-### Step 1: Get an OpenAI API Key
-
-1. Visit [OpenAI Platform](https://platform.openai.com/api-keys)
-2. Sign in or create an account
-3. Click "Create new secret key"
-4. Copy the generated key (starts with `sk-`)
-
-### Step 2: Configure the API Key
-
-**Option A: Environment Variable (Recommended)**
-
-**Windows (Command Prompt):**
-```bash
-set OPENAI_API_KEY=sk-your-key-here
-```
-
-**Windows (PowerShell):**
-```powershell
-$env:OPENAI_API_KEY="sk-your-key-here"
-```
-
-**macOS/Linux:**
-```bash
-export OPENAI_API_KEY=sk-your-key-here
-```
-
-**Option B: .env File**
-Create a `.env` file in the project root:
-```
-OPENAI_API_KEY=sk-your-key-here
-```
-
-**Option C: Web UI (Temporary)**
-- Enter your API key directly in the AI tab
-- No need to save it permanently
-
-### Step 3: Use AI Features
-
-1. **In the Web Interface:**
-   - Go to the "AI" tab
-   - Enter your target (domain, IP, username, etc.)
-   - Select the type of analysis
+3. **Use AI features**
+   - Go to the "AI" tab in the web interface
+   - Enter your target and select the type
    - Click "Summarize" for AI analysis
    - Ask follow-up questions with "Ask"
 
-2. **AI Capabilities:**
-   - Summarize gathered intelligence
-   - Answer questions about findings
-   - Provide context and insights
-   - Identify potential security implications
+## Supported Platforms
 
-## 🔧 Troubleshooting
+### Username Hunting
+- Twitter/X, Instagram, Facebook, LinkedIn
+- GitHub, GitLab, Bitbucket
+- YouTube, Twitch, TikTok
+- Reddit, Discord, Telegram
+- And 10+ more platforms
 
-### Common Installation Issues
+### Email Features
+- Syntax validation
+- Gravatar profile lookup
+- Social media presence detection
+
+### Domain Intelligence
+- WHOIS registration details
+- DNS records (A, AAAA, MX, NS, TXT, CNAME)
+- Certificate transparency subdomain enumeration
+
+### IP Analysis
+- Geolocation data
+- ISP and organization info
+- Reverse DNS lookup
+- Proxy/VPN detection
+
+## Troubleshooting
+
+### Common Issues
 
 **"No module named pip"**
 ```bash
@@ -273,154 +160,58 @@ python -m pip install --upgrade pip setuptools wheel
 ```
 
 **Build errors on Windows**
-```bash
-# Install Microsoft Visual C++ Build Tools, or use:
-pip install --only-binary=all -r requirements.txt
-```
-
-**Permission errors on macOS/Linux**
-```bash
-# Use sudo if needed:
-sudo python3 -m pip install -r requirements.txt
-```
-
-### Common Runtime Issues
-
-**"Module not found" errors**
-- Ensure your virtual environment is activated
-- Reinstall dependencies: `pip install -r requirements.txt`
-- For the web server, make sure all required packages are installed: `pip install httpx whois dnspython`
-
-**Web server won't start**
-```bash
-# Check if port 8000 is in use
-# Try a different port:
-python simple_server.py --port 8001
-
-# If you get import errors, make sure dependencies are installed:
-pip install -r requirements.txt
-
-# Make sure you're in the correct directory:
-cd OSINT-tool
-python simple_server.py
-```
+- Install Microsoft Visual C++ Build Tools
+- Or use the pre-built wheels: `pip install --only-binary=all -r requirements.txt`
 
 **API key not working**
 - Verify your OpenAI API key is correct
-- Check your OpenAI account has credits
+- Check your account has credits
 - Try entering the key directly in the web UI
 
-**Slow or failed requests**
-- Check your internet connection
-- Some APIs may have rate limits
-- Try again in a few minutes
+**Web server won't start**
+- Ensure you're in the virtual environment
+- Check port 8000 isn't already in use
+- Try a different port: `uvicorn osint_tool.webapp:app --port 8001`
 
 ### Getting Help
 
-1. **Check error messages** in the terminal for specific issues
-2. **Verify all dependencies** are installed: `pip list`
-3. **Ensure virtual environment** is activated (you should see `(.venv)` in your prompt)
-4. **Test internet connection** for API calls
-5. **Check Python version** meets requirements: `python --version`
+1. Check the error messages in the terminal
+2. Verify all dependencies are installed
+3. Ensure you're using the virtual environment
+4. Check your internet connection for API calls
 
-## 📚 Examples
+## Development
 
-### Domain Analysis Example
-
-```bash
-# Analyze a domain with all features
-python cli.py domain google.com --subdomains
-```
-
-This will show:
-- WHOIS registration details
-- DNS records (A, AAAA, MX, NS, TXT, CNAME)
-- Subdomains from certificate transparency logs
-
-### Username Hunting Example
-
-```bash
-# Check if a username exists on popular platforms
-python cli.py username johnsmith
-```
-
-This will check:
-- Twitter/X, Instagram, Facebook, LinkedIn
-- GitHub, GitLab, Bitbucket
-- YouTube, Twitch, TikTok
-- Reddit, Discord, Telegram
-- And more...
-
-### IP Analysis Example
-
-```bash
-# Get detailed information about an IP address
-python cli.py ip 1.1.1.1
-```
-
-This will show:
-- Geolocation (country, city, coordinates)
-- ISP and organization information
-- Reverse DNS (PTR record)
-- Proxy/VPN detection
-
-## 🔒 Security and Legal Notes
-
-### Responsible Use
-- This tool is for **legitimate OSINT research only**
-- Respect rate limits and terms of service
-- Don't use for malicious purposes
-- Follow applicable laws and regulations
-
-### Privacy
-- API keys are stored locally only
-- All requests are made from your machine
-- No data is sent to external servers except for legitimate lookups
-
-### Supported Platforms
-The tool checks these platforms for username availability:
-- **Social Media**: Twitter/X, Instagram, Facebook, LinkedIn, TikTok
-- **Development**: GitHub, GitLab, Bitbucket
-- **Gaming**: Twitch, Discord, Steam
-- **Content**: YouTube, Reddit, Medium
-- **Professional**: Stack Overflow, Behance, Dribbble
-- **And more...**
-
-## 🏗️ Project Structure
-
+### Project Structure
 ```
 OSINT-tool/
 ├── osint_tool/
-│   ├── __init__.py          # Package initialization
-│   ├── __main__.py          # CLI entry point
-│   ├── cli.py              # CLI commands and core logic
-│   ├── webapp.py           # FastAPI web application (alternative)
+│   ├── __init__.py
+│   ├── __main__.py
+│   ├── cli.py          # CLI commands and core logic
+│   ├── webapp.py       # FastAPI web application
 │   └── web_static/
-│       └── index.html      # Web interface
-├── simple_server.py        # Simple HTTP server (recommended)
-├── requirements.txt        # Python dependencies
-└── README.md              # This file
+│       └── index.html  # Web interface
+├── requirements.txt    # Python dependencies
+└── README.md
 ```
 
-**Server Options:**
-- **`simple_server.py`** - **Recommended**: Simple HTTP server with full API support
-- **`webapp.py`** - Alternative: Full FastAPI server (more complex setup)
-- **CLI only** - Use `python cli.py` for command-line only
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
+### Adding New Features
+1. Extend the CLI functions in `cli.py`
+2. Add corresponding API endpoints in `webapp.py`
+3. Update the web interface in `index.html`
 4. Test both CLI and web interfaces
-5. Submit a pull request
 
-## 📄 License
+## Security Notes
+
+- This tool is for legitimate OSINT research only
+- Respect rate limits and terms of service
+- Don't use for malicious purposes
+- API keys are stored locally only
+- All requests are made from your machine
+
+## License
 
 This project is for educational and legitimate research purposes only. Use responsibly and in accordance with applicable laws and terms of service.
-
----
-
-**Happy OSINT hunting! 🔍**
 
 
